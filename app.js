@@ -11,7 +11,8 @@ app.set("view engine", "ejs");
 
 const campgroundSchema = mongoose.Schema({
     name: String,
-    image: String
+    image: String,
+    description: String
 });
 
 let Campground = mongoose.model("Campground", campgroundSchema);
@@ -37,17 +38,17 @@ app.get("/campgrounds", (req, res)=> {
         if(err){
             console.log(err);
         } else {
-            res.render("campgrounds", {campgrounds: allCampgrounds})
+            res.render("index", {campgrounds: allCampgrounds})
         }
-    })
-    //res.render("campgrounds", {campgrounds: campgrounds});
-})
+    });
+});
 
 app.post("/campgrounds", (req, res)=> {
     console.log(req.body);
     let name = req.body.name;
-    let image= req.body.image;
-    let newCampground = {name: name, image: image};
+    let image = req.body.image;
+    let desc = req.body.description;
+    let newCampground = {name: name, image: image, description: desc};
     Campground.create(newCampground, (err, newlyCreated)=> {
         if(err){
             console.log(err);
@@ -58,10 +59,20 @@ app.post("/campgrounds", (req, res)=> {
 });
 
 app.get("/campgrounds/new", (req,res)=> {
-    res.render("new.ejs");
-})
+    res.render("new");
+});
+
+app.get("/campgrounds/:id", (req, res)=> {
+    Campground.findById(req.params.id, (err, foundCampground)=> {
+        if(err){
+            console.log(err);
+        } else {
+            res.render("details", {campground: foundCampground});
+        }
+    });
+});
 
 //process.env.PORT, process.env.IP
 app.listen("3000", ()=>{
     console.log("YelpCamp Server started!");
-})
+});
