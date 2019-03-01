@@ -7,4 +7,8 @@
 
 <p><%= campground.description %></p>
 
+<% campground.comments.forEach(comment => { %>
+    <p><strong><% comment.author %></strong> - <strong><% comment.text %></strong></p>
+<% }) %>
+
 <% include partials/footer %>
