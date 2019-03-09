@@ -2,9 +2,12 @@ const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
 //const request = require('request');
+const passport = require('passport');
+const LocalStrategy = require('passport-local');
 const mongoose = require('mongoose');
 const Campground = require('./models/campground');
 const Comment = require('./models/comment');
+const User = require('./models/user');
 const seedDB = require('./seeds');
 
 mongoose.connect("mongodb://localhost/yelp_camp", { useNewUrlParser: true });
@@ -14,17 +17,10 @@ app.set("view engine", "ejs");
 app.use(express.static(__dirname + "/public"));
 seedDB();
 
-/*Campground.create({
-    name: "Colchuck Lake", 
-    image: "https://farm3.staticflickr.com/2862/10350491664_6d0e84d55a.jpg"
-}, (err, campground)=> {
-    if(err){
-        console.log(err);
-    } else {
-        console.log("Created new campground");
-        console.log(campground);
-    }
-}); */
+/*
+Colchuck Lake,
+image: "https://farm3.staticflickr.com/2862/10350491664_6d0e84d55a.jpg"
+*/
 
 //sand point
 //https://www.photosforclass.com/download/flickr-8798412683
@@ -32,6 +28,19 @@ seedDB();
 
 //Cape alava
 //https://www.photosforclass.com/download/flickr-5165710222
+
+app.use(require('express-session')({
+    secret: 'Hello world!',
+    resave: false,
+    saveUninitialized: false
+}));
+
+app.use(passport.initialize());
+app.use(passport.session());
+passport.use(new LocalStrategy(User.authenticate()));
+passport.serializeUser(User.serializeUser());
+passport.deserializeUser(User.deserializeUser());
+
 
 app.get("/", (req, res)=> {
     res.render("landing");
