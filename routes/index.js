@@ -8,7 +8,7 @@ const isLoggedIn = (req, res, next) => {
         return next();
     }
     res.redirect("/login");
-}
+};
 
 router.get("/", (req, res)=> {
     res.render("landing");
