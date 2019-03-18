@@ -97,7 +97,7 @@ app.get("/campgrounds/:id/comments/new", (req, res)=> {
     });
 });
 
-app.post("/campgrounds/:id/comments", (req, res)=> {
+app.post("/campgrounds/:id/comments", (req, res) => {
     Campground.findById(req.params.id, (err, campground) => {
         if(err){
             console.log(err);
@@ -116,6 +116,22 @@ app.post("/campgrounds/:id/comments", (req, res)=> {
     });
 });
 
+app.get("/register", (req, res) => {
+    res.render("register");
+})
+
+app.post("/register", (req, res) => {
+    let newUser = new User({ username: req.body.username })
+    User.register(newUser, req.body.password, (err, user) => {
+        if(err) {
+            console.log(err);
+            return res.render("register");
+        }
+        passport.authenticate("local")(req, res, ()=> {
+            res.redirect("/campgrounds");
+        });
+    });
+});
 //process.env.PORT, process.env.IP
 app.listen("3000", ()=>{
     console.log("YelpCamp Server started!");
