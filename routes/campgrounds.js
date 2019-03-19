@@ -10,7 +10,7 @@ const isLoggedIn = (req, res, next) => {
 };
 
 router.get("/", (req, res)=> {
-    Campground.find({}, (err, allCampgrounds)=> {
+    Campground.find({}, (err, allCampgrounds) => {
         if(err){
             console.log(err);
         } else {
@@ -19,7 +19,11 @@ router.get("/", (req, res)=> {
     });
 });
 
-router.post("/", isLoggedIn, (req, res)=> {
+router.get("/new", isLoggedIn, (req, res) => {
+    res.render("campgrounds/new");
+});
+
+router.post("/", isLoggedIn, (req, res) => {
     console.log(req.body);
     let name = req.body.name;
     let image = req.body.image;
@@ -38,11 +42,7 @@ router.post("/", isLoggedIn, (req, res)=> {
     });
 });
 
-router.get("/new", isLoggedIn, (req, res)=> {
-    res.render("campgrounds/new");
-});
-
-router.get("/:id", (req, res)=> {
+router.get("/:id", (req, res) => {
     //Find campground by id and populate its comments
     Campground.findById(req.params.id).populate("comments").exec((err, foundCampground) => {
         if(err){
@@ -53,5 +53,27 @@ router.get("/:id", (req, res)=> {
         }
     });
 });
+
+router.get("/:id/edit", (req, res) => {
+    Campground.findById(req.params.id, (err, foundCampground) => {
+        if(err){
+            res.redirect("/campgrounds");
+        } else {
+            res.render("campgrounds/edit", {campground: foundCampground});
+        }
+    });
+});
+
+router.put("/:id", (req, res) => {
+    Campground.findByIdAndUpdate(req.params.id, req.body.campground, (err, updatedCampground) => {
+        if(err){
+            res.redirect("/campgrounds");
+        } else {
+            res.redirect("campgrounds/" + req.params.id);
+        }
+    });
+})
+
+
 
 module.exports = router;

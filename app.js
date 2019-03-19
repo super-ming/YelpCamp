@@ -8,6 +8,7 @@ const mongoose = require('mongoose');
 const Campground = require('./models/campground');
 const Comment = require('./models/comment');
 const User = require('./models/user');
+const methodOverride = require('method-override');
 const seedDB = require('./seeds');
 
 //Routes
@@ -22,6 +23,8 @@ app.use(bodyParser.urlencoded({extended: true}));
 app.set("view engine", "ejs");
 app.use(express.static(__dirname + "/public"));
 seedDB();
+
+app.use(methodOverride('_method'));
 
 /*
 Colchuck Lake,
