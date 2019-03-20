@@ -18,6 +18,9 @@
                     <p><%= campground.description %></p>
                     <p><em>Submitted By <%= campground.author.username %></em></p>
                     <a href="/campgrounds/<%= campground._id %>/edit" class="btn btn-warning">Edit</a>
+                    <form action="/campgrounds/<%= campground._id %>" method="POST" id="delete-form">
+                        <button class="btn btn-danger">Delete</button>
+                    </form>
                 </div>
             </div>
             <div class="well">
