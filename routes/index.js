@@ -2,13 +2,7 @@ const express = require('express');
 const router = express.Router();
 const passport = require('passport');
 let User = require('../models/user');
-
-const isLoggedIn = (req, res, next) => {
-    if(req.isAuthenticated()) {
-        return next();
-    }
-    res.redirect("/login");
-};
+const middleware = require('../middleware');
 
 router.get("/", (req, res)=> {
     res.render("landing");
@@ -16,16 +10,17 @@ router.get("/", (req, res)=> {
 
 router.get("/register", (req, res) => {
     res.render("register");
-})
+});
 
 router.post("/register", (req, res) => {
     let newUser = new User({ username: req.body.username })
     User.register(newUser, req.body.password, (err, user) => {
-        if(err) {
-            console.log(err);
+        if(err){
+            req.flash("error", err.message);
             return res.render("register");
         }
         passport.authenticate("local")(req, res, ()=> {
+            req.flash("success", "Welcome to Yelpcamp " + user.username);
             res.redirect("/campgrounds");
         });
     });
@@ -33,7 +28,7 @@ router.post("/register", (req, res) => {
 
 router.get("/login", (req, res) => {
     res.render("login");
-})
+});
 
 router.post("/login", passport.authenticate("local", 
     { successRedirect: "/campgrounds", 
@@ -43,6 +38,7 @@ router.post("/login", passport.authenticate("local",
 
 router.get("/logout", (req, res) => {
     req.logout();
+    req.flash("success", "You're logged out!");
     res.redirect("/campgrounds");
 });
 

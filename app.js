@@ -9,6 +9,7 @@ const Campground = require('./models/campground');
 const Comment = require('./models/comment');
 const User = require('./models/user');
 const methodOverride = require('method-override');
+const flash = require('connect-flash');
 const seedDB = require('./seeds');
 
 //Routes
@@ -25,6 +26,7 @@ app.use(express.static(__dirname + "/public"));
 //seedDB();
 
 app.use(methodOverride('_method'));
+app.use(flash());
 
 /*
 Colchuck Lake,
@@ -53,6 +55,8 @@ passport.deserializeUser(User.deserializeUser());
 //middleware to pass current user data to all views
 app.use((req, res, next) => {
     res.locals.currentUser = req.user;
+    res.locals.error = req.flash("error");
+    res.locals.success = req.flash("success");
     next();
 });
 
