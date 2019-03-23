@@ -20,13 +20,14 @@ router.get("/new", middleware.isLoggedIn, (req, res) => {
 
 router.post("/", middleware.isLoggedIn, (req, res) => {
     let name = req.body.name;
+    let price = req.body.price;
     let image = req.body.image;
     let desc = req.body.description;
     let author = {
         id: req.user.id,
         username: req.user.username
     };
-    let newCampground = {name: name, image: image, description: desc, author: author};
+    let newCampground = {name: name, price: price, image: image, description: desc, author: author};
     Campground.create(newCampground, (err, newlyCreated) => {
         if(err){
             req.flash("error", err.message);
