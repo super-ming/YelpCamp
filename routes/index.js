@@ -55,4 +55,69 @@ router.get("/logout", (req, res) => {
     res.redirect("/campgrounds");
 });
 
+// forgot password
+router.get('/forgot', (req, res) => {
+  res.render('forgot');
+});
+
+router.post('/forgot', (req, res, next) => {
+  async.waterfall([
+    (done) => {
+      // generate user token
+      crypto.randomBytes(20, (err, buf) => {
+        if(err){
+            req.flash("error", err.message);
+            return res.render("register");
+        }
+        var token = buf.toString('hex');
+        done(err, token);
+      });
+    },
+    (token, done) => {
+      // find user by email provided in the forgot password form
+      User.findOne({ email: req.body.email }, (err, user) => {
+        if (!user) {
+          req.flash('error', 'No account with that email address exists.');
+          return res.redirect('/forgot');
+        }
+
+        user.resetPasswordToken = token;
+        user.resetPasswordExpires = Date.now() + 3600000; // token expires in 1 hour
+
+        user.save(err => {
+          done(err, token, user);
+        });
+      });
+    },
+    (token, user, done) => {
+      // create email object with reset link and user token
+      let smtpTransport = nodemailer.createTransport({
+        service: 'Gmail',
+        auth: {
+          user: 'hkboi108@gmail.com',
+          pass: process.env.GMAILPW
+        }
+      });
+      let mailOptions = {
+        to: user.email,
+        from: 'hkboi108@gmail.com',
+        subject: 'Node.js Password Reset',
+        text: 'You are receiving this because you (or someone else) have requested the reset of the password for your account.\n\n' +
+          'Please click on the following link, or paste this into your browser to complete the process:\n\n' +
+          'http://' + req.headers.host + '/reset/' + token + '\n\n' +
+          'If you did not request this, please ignore this email and your password will remain unchanged.\n'
+      };
+      // send email to user email
+      smtpTransport.sendMail(mailOptions, (err) => {
+        req.flash('success', 'An e-mail has been sent to ' + user.email + ' with further instructions.');
+        done(err, 'done');
+      });
+    }
+  ], (err) => {
+    if(err){
+        req.flash("error", err.message);
+    }
+    res.redirect('/forgot');
+  });
+});
 module.exports = router;
