@@ -1,7 +1,6 @@
 const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
-//const request = require('request');
 const passport = require('passport');
 const LocalStrategy = require('passport-local');
 const mongoose = require('mongoose');
@@ -11,35 +10,41 @@ const User = require('./models/user');
 const methodOverride = require('method-override');
 const flash = require('connect-flash');
 const seedDB = require('./seeds');
+const session = require("express-session")
 
-//Routes
+// configure dotenv
+require('dotenv').load();
+
+// Routes
 const commentRoutes = require('./routes/comments');
 const campgroundRoutes = require('./routes/campgrounds');
 const indexRoutes = require('./routes/index');
 
-
 mongoose.connect("mongodb://localhost/yelp_camp", { useNewUrlParser: true });
-app.use(bodyParser.urlencoded({extended: true}));
+//mongoose.connect("mongodb+srv://admin:dKBpuKZV3AP9pdm@cluster0-5iq2f.mongodb.net/test?retryWrites=true", { useNewUrlParser: true });
+app.use(bodyParser.urlencoded({extended: true}))  ;
 
 app.set("view engine", "ejs");
 app.use(express.static(__dirname + "/public"));
-//seedDB();
+//seedDB(); // seed the database
 
 app.use(methodOverride('_method'));
+app.use(cookieParser('secret'));
 app.use(flash());
+
+//require moment
+app.locals.moment = require('moment');
 
 /*
 Colchuck Lake,
 image: "https://farm3.staticflickr.com/2862/10350491664_6d0e84d55a.jpg"
+sand point
+image: "https://www.photosforclass.com/download/flickr-8798412683"
+Cape alava
+image: "https://www.photosforclass.com/download/flickr-5165710222"
 */
 
-//sand point
-//https://www.photosforclass.com/download/flickr-8798412683
-
-
-//Cape alava
-//https://www.photosforclass.com/download/flickr-5165710222
-
+// Passport configuration
 app.use(require('express-session')({
     secret: 'Hello world!',
     resave: false,
