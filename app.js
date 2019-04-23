@@ -10,10 +10,11 @@ const User = require('./models/user');
 const methodOverride = require('method-override');
 const flash = require('connect-flash');
 const seedDB = require('./seeds');
-const session = require("express-session")
+const session = require("express-session");
+cookieParser = require("cookie-parser");
 
 // configure dotenv
-require('dotenv').load();
+require('dotenv').config();
 
 // Routes
 const commentRoutes = require('./routes/comments');
