@@ -4,7 +4,8 @@
   "description": "Website that provides a list of campgrounds",
   "main": "app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node app.js"
   },
   "author": "Ming Ho",
   "license": "ISC",
