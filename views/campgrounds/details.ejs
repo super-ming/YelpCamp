@@ -17,7 +17,7 @@
                     <h4><a><%= campground.name %></a></h4>
                     <p><%= campground.description %></p>
                     <p><em>Submitted By <%= campground.author.username %></em></p>
-                    <% if(currentUser && campground.author.id.equals(currentUser._id)){ %>
+                    <% if(currentUser && campground.author.id.equals(currentUser._id)  || currentUser && currentUser.isAdmin)){ %>
                         <a href="/campgrounds/<%= campground._id %>/edit" class="btn btn-warning">Edit</a>
                         <form action="/campgrounds/<%= campground._id %>" method="POST" class="delete-form">
                             <button class="btn btn-danger">Delete</button>
@@ -36,8 +36,8 @@
                             <strong><%= comment.author.username %></strong>
                             <span class="pull-right">10 days ago</span>
                             <p><%= comment.text %></p>
-                            <% if(currentUser && comment.author.id.equals(currentUser._id)){ %>
-                                <a href="/campgrounds/<%= campground._id %>/comments/<%= comment._id %>/edit" 
+                            <% if(currentUser && comment.author.id.equals(currentUser._id) || currentUser && currentUser.isAdmin)){ %>
+                                <a href="/campgrounds/<%= campground._id %>/comments/<%= comment._id %>/edit"
                                 class="btn btn-xs btn-warning">Edit</a>
                                 <form action="/campgrounds/<%= campground._id %>/comments/<%= comment._id %>?_method=DELETE" method="POST" class="delete-form">
                                     <input type="submit" class="btn btn-xs btn-danger" value="Delete">
