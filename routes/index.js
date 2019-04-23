@@ -43,9 +43,11 @@ router.get("/login", (req, res) => {
     res.render("login");
 });
 
-router.post("/login", passport.authenticate("local", 
-    { successRedirect: "/campgrounds", 
-      failureRedirect: "/login"
+router.post("/login", passport.authenticate("local",
+    { successRedirect: "/campgrounds",
+      failureRedirect: "/login",
+      failureFlash: true,
+      successFlash: 'Welcome to Yelpcamp!'
     }), (req, res) => {
 });
 
@@ -120,4 +122,78 @@ router.post('/forgot', (req, res, next) => {
     res.redirect('/forgot');
   });
 });
+
+// user clicks on forgot password email link
+router.get('/reset/:token', (req, res) => {
+  // search for user using provided user token from email
+  User.findOne({ resetPasswordToken: req.params.token, resetPasswordExpires: { $gt: Date.now() } }, (err, user) => {
+    if (!user) {
+      req.flash('error', 'Password reset token is invalid or has expired.');
+      return res.redirect('/forgot');
+    }
+    // if user is found, show reset password view
+    res.render('reset', {token: req.params.token});
+  });
+});
+
+router.post('/reset/:token', (req, res) => {
+  async.waterfall([
+    (done) => {
+      User.findOne({ resetPasswordToken: req.params.token, resetPasswordExpires: { $gt: Date.now() } }, (err, user) => {
+        if (!user) {
+          req.flash('error', 'Password reset token is invalid or has expired.');
+          return res.redirect('back');
+        }
+        if (req.body.password === req.body.confirm) {
+          // Mongoose setPassword method that sets and encrypts the password
+          user.setPassword(req.body.password, (err) => {
+            // invalidate user token and expiration date
+            user.resetPasswordToken = undefined;
+            user.resetPasswordExpires = undefined;
+            // save new user info and log in
+            user.save(err => {
+              if(err){
+                  req.flash("error", err.message);
+                  return res.render("register");
+              }
+              req.logIn(user, err => {
+                if(err){
+                    req.flash("error", err.message);
+                    return res.render("register");
+                }
+                done(err, user);
+              });
+            });
+          })
+        } else {
+            req.flash("error", "Passwords do not match.");
+            return res.redirect('back');
+        }
+      });
+    },
+    (user, done) => {
+      let smtpTransport = nodemailer.createTransport({
+        service: 'Gmail',
+        auth: {
+          user: 'hkboi108@gmail.com',
+          pass: process.env.GMAILPW
+        }
+      });
+      let mailOptions = {
+        to: user.email,
+        from: 'hkboi108@mail.com',
+        subject: 'Your password has been changed',
+        text: 'Hello,\n\n' +
+          'This is a confirmation that the password for your account ' + user.email + ' has just been changed.\n'
+      };
+      smtpTransport.sendMail(mailOptions, (err) => {
+        req.flash('success', 'Success! Your password has been changed.');
+        done(err);
+      });
+    }
+  ], (err) => {
+    res.redirect('/campgrounds');
+  });
+});
+
 module.exports = router;

@@ -33,10 +33,9 @@ router.post("/", middleware.isLoggedIn, (req, res) => {
                     res.redirect("/campgrounds/" + campground._id);
                 }
             });
-        } 
+        }
     });
 });
-
 
 router.get("/:comment_id/edit", middleware.checkCommentOwnership, (req, res) => {
     Campground.findById(req.params.id, (err, foundCampground)=> {
