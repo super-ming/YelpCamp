@@ -1,10 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const passport = require('passport');
-let User = require('../models/user');
 const middleware = require('../middleware');
-let Campground = require('../models/campground');
-let crypto = require('crypto');
+const crypto = require('crypto');
+const async = require("async");
+const nodemailer = require("nodemailer");
+const Campground = require('../models/campground');
+const User = require('../models/user');
 
 router.get("/", (req, res)=> {
     res.render("landing");
@@ -193,6 +195,25 @@ router.post('/reset/:token', (req, res) => {
     }
   ], (err) => {
     res.redirect('/campgrounds');
+  });
+});
+
+// USER PROFILE
+// find user by id
+router.get("/users/:id", (req, res) => {
+  User.findById(req.params.id, (err, foundUser) => {
+    if(err) {
+      req.flash("error", "Something went wrong.");
+      res.redirect("/");
+    }
+    // find campgrounds with user id
+    Campground.find().where('author.id').equals(foundUser._id).exec((err, campgrounds) => {
+      if(err) {
+        req.flash("error", "Something went wrong.");
+        res.redirect("/");
+      }
+      res.render("users/profile", {user: foundUser, campgrounds: campgrounds});
+    })
   });
 });
 
