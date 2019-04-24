@@ -3,15 +3,35 @@ const router = express.Router();
 const Campground = require('../models/campground');
 const middleware = require('../middleware');
 
+const escapeRegex = text => {
+    return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
+};
 //Campground Routes
 router.get("/", (req, res)=> {
-    Campground.find({}, (err, allCampgrounds) => {
-        if(err){
-            req.flash("error", err.message);
-        } else {
-            res.render("campgrounds/index", {campgrounds: allCampgrounds})
-        }
-    });
+    let noMatch = null;
+    if(req.query.search) {
+        const regex = new RegExp(escapeRegex(req.query.search), 'gi');
+        // get campgrounds by name from DB with search input
+        Campground.find({name: regex}, (err, allCampgrounds) => {
+            if(err){
+                req.flash("error", err.message);
+            } else {
+                if(allCampgrounds.length < 1) {
+                    noMatch = "No campgrounds match that query, please try again.";
+                }
+                res.render("campgrounds/index", {campgrounds: allCampgrounds, noMatch: noMatch})
+            }
+        });
+    } else {
+      // Get all campgrounds from DB
+        Campground.find({}, function(err, allCampgrounds){
+           if(err){
+               console.log(err);
+           } else {
+              res.render("campgrounds/index",{campgrounds:allCampgrounds, noMatch: noMatch});
+           }
+        });
+    }
 });
 
 router.get("/new", middleware.isLoggedIn, (req, res) => {
@@ -20,14 +40,14 @@ router.get("/new", middleware.isLoggedIn, (req, res) => {
 
 router.post("/", middleware.isLoggedIn, (req, res) => {
     let name = req.body.name;
-    let price = req.body.price;
+    let cost = req.body.cost;
     let image = req.body.image;
     let desc = req.body.description;
     let author = {
-        id: req.user.id,
+        id: req.user._id,
         username: req.user.username
     };
-    let newCampground = {name: name, price: price, image: image, description: desc, author: author};
+    let newCampground = {name: name, cost: cost, image: image, description: desc, author: author};
     Campground.create(newCampground, (err, newlyCreated) => {
         if(err){
             req.flash("error", err.message);
@@ -56,7 +76,7 @@ router.get("/:id/edit", middleware.checkCampgroundOwnership, (req, res) => {
             req.flash("error", "Campground not found");
         }
         res.render("campgrounds/edit", {campground: foundCampground});
-    }); 
+    });
 });
 
 router.put("/:id", middleware.checkCampgroundOwnership, (req, res) => {
@@ -71,9 +91,10 @@ router.put("/:id", middleware.checkCampgroundOwnership, (req, res) => {
     });
 });
 
-router.delete(":/id", middleware.checkCampgroundOwnership, (req, res) => {
+router.delete("/:id", middleware.checkCampgroundOwnership, (req, res) => {
     Campground.findByIdAndRemove(req.params.id, (err) => {
         if(err){
+             console.log(err);
             req.flash("error", "Something went wrong");
             res.redirect("/campgrounds");
         } else {
