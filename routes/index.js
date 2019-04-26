@@ -29,10 +29,17 @@ router.post("/register", (req, res) => {
       newUser.isAdmin = true;
     }
 
+    User.findOne({ email: req.body.email }, (err, user) => {
+      if (user) {
+        req.flash('error', 'This email address is already registered.');
+        return res.redirect('register');
+      }
+    })
+
     User.register(newUser, req.body.password, (err, user) => {
         if(err){
             req.flash("error", err.message);
-            return res.render("register");
+            return res.redirect("register");
         }
         passport.authenticate("local")(req, res, ()=> {
             req.flash("success", "Welcome to Yelpcamp " + user.username);
