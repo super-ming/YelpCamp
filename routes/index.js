@@ -64,36 +64,39 @@ router.get('/forgot', (req, res) => {
   res.render('forgot');
 });
 
-router.post('/forgot', (req, res, next) => {
-  async.waterfall([
-    (done) => {
-      // generate user token
-      crypto.randomBytes(20, (err, buf) => {
+router.post('/forgot', async (req, res, next) => {
+  const generateToken = ({ stringBase = 'hex', byteLength = 20 } = {}) => {
+    return new Promise((resolve, reject) => {
+      crypto.randomBytes(byteLength, (err, buf) => {
         if(err){
             req.flash("error", err.message);
+            reject(err.message)
             return res.render("register");
         }
-        var token = buf.toString('hex');
-        done(err, token);
+        resolve(buf.toString(stringBase));
       });
-    },
-    (token, done) => {
-      // find user by email provided in the forgot password form
+    });
+  };
+
+  const findUser = token => {
+    return new Promise((resolve, reject) => {
       User.findOne({ email: req.body.email }, (err, user) => {
         if (!user) {
           req.flash('error', 'No account with that email address exists.');
           return res.redirect('/forgot');
         }
-
+  
         user.resetPasswordToken = token;
         user.resetPasswordExpires = Date.now() + 3600000; // token expires in 1 hour
-
         user.save(err => {
-          done(err, token, user);
+          resolve(user);
         });
       });
-    },
-    (token, user, done) => {
+    })
+  };
+
+  const sendEmail = (token, user) => {
+    return new Promise((resolve, reject) => {
       // create email object with reset link and user token
       let smtpTransport = nodemailer.createTransport({
         service: 'Gmail',
@@ -105,7 +108,7 @@ router.post('/forgot', (req, res, next) => {
       let mailOptions = {
         to: user.email,
         from: 'hkboi108@gmail.com',
-        subject: 'Node.js Password Reset',
+        subject: 'Yelpcamp Password Reset',
         text: 'You are receiving this because you (or someone else) have requested the reset of the password for your account.\n\n' +
           'Please click on the following link, or paste this into your browser to complete the process:\n\n' +
           'http://' + req.headers.host + '/reset/' + token + '\n\n' +
@@ -113,16 +116,24 @@ router.post('/forgot', (req, res, next) => {
       };
       // send email to user email
       smtpTransport.sendMail(mailOptions, (err) => {
-        req.flash('success', 'An e-mail has been sent to ' + user.email + ' with further instructions.');
-        done(err, 'done');
+        resolve(req.flash('success', 'An e-mail has been sent to ' + user.email + ' with further instructions.'),
+        res.redirect('/forgot'));
+        if (err) {
+          reject(err);
+        }
       });
-    }
-  ], (err) => {
-    if(err){
-        req.flash("error", err.message);
-    }
+      resolve(user);
+    })
+  }
+
+  try {
+    const newToken = await generateToken();
+    const user = await findUser(newToken);
+    const email = await sendEmail(newToken, user);
+  } catch (err) {
+    req.flash("error", err.message);
     res.redirect('/forgot');
-  });
+  }
 });
 
 // user clicks on forgot password email link
@@ -138,9 +149,10 @@ router.get('/reset/:token', (req, res) => {
   });
 });
 
-router.post('/reset/:token', (req, res) => {
-  async.waterfall([
-    (done) => {
+router.post('/reset/:token', async (req, res) => {
+
+  const resetPassword = () => {
+    return new Promise((resolve, reject) => {
       User.findOne({ resetPasswordToken: req.params.token, resetPasswordExpires: { $gt: Date.now() } }, (err, user) => {
         if (!user) {
           req.flash('error', 'Password reset token is invalid or has expired.');
@@ -163,8 +175,8 @@ router.post('/reset/:token', (req, res) => {
                     req.flash("error", err.message);
                     return res.render("register");
                 }
-                done(err, user);
               });
+              resolve(user);
             });
           })
         } else {
@@ -172,8 +184,11 @@ router.post('/reset/:token', (req, res) => {
             return res.redirect('back');
         }
       });
-    },
-    (user, done) => {
+    })
+  }
+
+  const sendEmail = user => {
+    return new Promise((resolve, reject) => {
       let smtpTransport = nodemailer.createTransport({
         service: 'Gmail',
         auth: {
@@ -183,19 +198,26 @@ router.post('/reset/:token', (req, res) => {
       });
       let mailOptions = {
         to: user.email,
-        from: 'hkboi108@mail.com',
-        subject: 'Your password has been changed',
+        from: 'hkboi108@gmail.com',
+        subject: 'Your Yelpcamp password has been changed',
         text: 'Hello,\n\n' +
           'This is a confirmation that the password for your account ' + user.email + ' has just been changed.\n'
       };
       smtpTransport.sendMail(mailOptions, (err) => {
         req.flash('success', 'Success! Your password has been changed.');
-        done(err);
+        res.redirect('/campgrounds');
       });
-    }
-  ], (err) => {
-    res.redirect('/campgrounds');
-  });
+      resolve(user);
+    })
+  }
+
+  try {
+    const user = await resetPassword();
+    const email = await sendEmail(user);
+  } catch (err) {
+    req.flash("error", err.message);
+    res.redirect('reset');
+  }
 });
 
 // USER PROFILE
