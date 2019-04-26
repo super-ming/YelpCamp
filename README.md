@@ -5,11 +5,13 @@ This application allows users to share information about their favorite campgrou
 Public users can browse through campground details. The user needs to be sign up for
 an account and be login in order to add campgrounds and write review comments for the campground. Either the author of the original campground submission or an user with admin role can edit or delete the campground entry.  
 
+Live demo - https://yelpcamp19.herokuapp.com/
+
 ## How To Run
 
 Clone the files to your local machine. Open a terminal, go to the project directory, and type `install npm` to add the required dependencies.
 
-This application uses a MongoDB database. Please follow these instructions to install MongoDB(https://docs.mongodb.com/v3.2/installation/). 
+This application uses a MongoDB database. Please follow these instructions to install [MongoDB](https://docs.mongodb.com/v3.2/installation/). 
 
 Follow these instructions to open the Mongo [shell](https://docs.mongodb.com/v3.2/mongo/). 
 Once you have the Mongo shell open, make a new database called "yelp_camp" by typing "use yelp_camp" in the shell window. 
